@@ -1,0 +1,20 @@
+{
+  "[project]/src/components/SnowEffect.tsx [app-client] (ecmascript, next/dynamic entry)": {
+    "id": "[project]/src/components/SnowEffect.tsx [app-client] (ecmascript, next/dynamic entry)",
+    "files": [
+      "static/chunks/src_components_SnowEffect_tsx_1o8kcvp._.js"
+    ]
+  },
+  "[project]/src/components/StarBackground.tsx [app-client] (ecmascript, next/dynamic entry)": {
+    "id": "[project]/src/components/StarBackground.tsx [app-client] (ecmascript, next/dynamic entry)",
+    "files": [
+      "static/chunks/src_components_StarBackground_tsx_0czcbca._.js"
+    ]
+  },
+  "[project]/src/components/MusicPlayer.tsx [app-client] (ecmascript, next/dynamic entry)": {
+    "id": "[project]/src/components/MusicPlayer.tsx [app-client] (ecmascript, next/dynamic entry)",
+    "files": [
+      "static/chunks/src_components_MusicPlayer_tsx_1893sz3._.js"
+    ]
+  }
+}
