@@ -1,203 +1,202 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-// Generate Christmas melody using Web Audio API
-const createChristmasMelody = (audioCtx: AudioContext): AudioBufferSourceNode => {
-  const sampleRate = audioCtx.sampleRate;
-  const duration = 8;
-  const buffer = audioCtx.createBuffer(2, sampleRate * duration, sampleRate);
+// ── Melody ──────────────────────────────────────────────────────────────────
+// Notes for a simple Christmas melody (Jingle Bells snippet)
+const NOTES = [
+  { f: 329.63, s: 0,    d: 0.28 }, { f: 329.63, s: 0.33, d: 0.28 },
+  { f: 329.63, s: 0.66, d: 0.55 }, { f: 329.63, s: 1.3,  d: 0.28 },
+  { f: 329.63, s: 1.63, d: 0.28 }, { f: 329.63, s: 1.96, d: 0.55 },
+  { f: 329.63, s: 2.6,  d: 0.28 }, { f: 392.0,  s: 2.93, d: 0.28 },
+  { f: 261.63, s: 3.26, d: 0.28 }, { f: 293.66, s: 3.6,  d: 0.14 },
+  { f: 329.63, s: 3.74, d: 0.82 }, { f: 349.23, s: 4.7,  d: 0.28 },
+  { f: 349.23, s: 5.03, d: 0.28 }, { f: 349.23, s: 5.36, d: 0.42 },
+  { f: 349.23, s: 5.9,  d: 0.28 }, { f: 329.63, s: 6.23, d: 0.28 },
+  { f: 329.63, s: 6.56, d: 0.28 }, { f: 293.66, s: 6.9,  d: 0.28 },
+  { f: 293.66, s: 7.2,  d: 0.14 }, { f: 329.63, s: 7.34, d: 0.55 },
+];
 
-  const notes = [
-    { freq: 329.63, start: 0, dur: 0.3 },
-    { freq: 329.63, start: 0.35, dur: 0.3 },
-    { freq: 329.63, start: 0.7, dur: 0.6 },
-    { freq: 329.63, start: 1.35, dur: 0.3 },
-    { freq: 329.63, start: 1.7, dur: 0.3 },
-    { freq: 329.63, start: 2.05, dur: 0.6 },
-    { freq: 329.63, start: 2.7, dur: 0.3 },
-    { freq: 392.0,  start: 3.05, dur: 0.3 },
-    { freq: 261.63, start: 3.4, dur: 0.3 },
-    { freq: 293.66, start: 3.75, dur: 0.15 },
-    { freq: 329.63, start: 3.95, dur: 0.9 },
-    { freq: 349.23, start: 4.9, dur: 0.3 },
-    { freq: 349.23, start: 5.25, dur: 0.3 },
-    { freq: 349.23, start: 5.6, dur: 0.45 },
-    { freq: 349.23, start: 6.1, dur: 0.3 },
-    { freq: 329.63, start: 6.45, dur: 0.3 },
-    { freq: 329.63, start: 6.8, dur: 0.3 },
-    { freq: 293.66, start: 7.15, dur: 0.3 },
-    { freq: 293.66, start: 7.5, dur: 0.15 },
-    { freq: 329.63, start: 7.7, dur: 0.2 },
-  ];
+const buildMelody = (ctx: AudioContext): AudioBufferSourceNode => {
+  const sr  = ctx.sampleRate;
+  const dur = 8;
+  const buf = ctx.createBuffer(1, sr * dur, sr); // mono — lighter on mobile
+  const ch  = buf.getChannelData(0);
 
-  for (let channel = 0; channel < 2; channel++) {
-    const channelData = buffer.getChannelData(channel);
-    notes.forEach(({ freq, start, dur }) => {
-      const startSample = Math.floor(start * sampleRate);
-      const endSample = Math.floor((start + dur) * sampleRate);
-      for (let i = startSample; i < endSample && i < channelData.length; i++) {
-        const t = (i - startSample) / sampleRate;
-        const envelope = Math.min(t * 10, 1) * Math.min((dur - t) * 10, 1);
-        channelData[i] += 0.12 * envelope * (
-          Math.sin(2 * Math.PI * freq * t) +
-          0.5 * Math.sin(2 * Math.PI * freq * 2 * t) +
-          0.25 * Math.sin(2 * Math.PI * freq * 3 * t)
-        );
-      }
-    });
-    const chordFreqs = [261.63, 329.63, 392.0];
-    chordFreqs.forEach(freq => {
-      for (let i = 0; i < channelData.length; i++) {
-        const t = i / sampleRate;
-        const envelope = 0.03 + 0.02 * Math.sin(2 * Math.PI * 0.5 * t);
-        channelData[i] += envelope * Math.sin(2 * Math.PI * freq * t * 0.5);
-      }
-    });
+  NOTES.forEach(({ f, s, d }) => {
+    const s0 = Math.floor(s * sr);
+    const s1 = Math.min(Math.floor((s + d) * sr), ch.length);
+    for (let i = s0; i < s1; i++) {
+      const t   = (i - s0) / sr;
+      const env = Math.min(t * 12, 1) * Math.min((d - t) * 12, 1);
+      ch[i] += 0.15 * env * (
+        Math.sin(2 * Math.PI * f * t) +
+        0.4 * Math.sin(2 * Math.PI * f * 2 * t)
+      );
+    }
+  });
+
+  // Soft background pad
+  for (let i = 0; i < ch.length; i++) {
+    const t = i / sr;
+    ch[i] += 0.025 * Math.sin(2 * Math.PI * 261.63 * t * 0.5);
   }
 
-  const source = audioCtx.createBufferSource();
-  source.buffer = buffer;
-  source.loop = true;
-  return source;
+  const src = ctx.createBufferSource();
+  src.buffer  = buf;
+  src.loop    = true;
+  return src;
 };
 
+// ── Component ────────────────────────────────────────────────────────────────
 const MusicPlayer = () => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(0.4);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
+  const [isPlaying,   setIsPlaying]   = useState(false);
+  const [isExpanded,  setIsExpanded]  = useState(false);
+  const [volume,      setVolume]      = useState(0.4);
+  const [needsClick,  setNeedsClick]  = useState(false);
 
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const gainNodeRef = useRef<GainNode | null>(null);
-  const sourceRef = useRef<AudioBufferSourceNode | null>(null);
-  const hasStartedRef = useRef(false);
+  const ctxRef    = useRef<AudioContext | null>(null);
+  const gainRef   = useRef<GainNode   | null>(null);
+  const srcRef    = useRef<AudioBufferSourceNode | null>(null);
+  const startedRef = useRef(false);
 
-  const stopAudio = useCallback(() => {
-    if (sourceRef.current) {
-      try { sourceRef.current.stop(); } catch {}
-      sourceRef.current = null;
+  // ── helpers ──────────────────────────────────────────────────────────────
+  const stopSrc = useCallback(() => {
+    if (srcRef.current) {
+      try { srcRef.current.stop(); } catch { /* already stopped */ }
+      srcRef.current = null;
     }
   }, []);
 
-  const startAudio = useCallback(async () => {
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      gainNodeRef.current = audioCtxRef.current.createGain();
-      gainNodeRef.current.connect(audioCtxRef.current.destination);
-      gainNodeRef.current.gain.value = volume;
-    }
-    if (audioCtxRef.current.state === 'suspended') {
-      await audioCtxRef.current.resume();
-    }
-    if (!sourceRef.current) {
-      const source = createChristmasMelody(audioCtxRef.current);
-      source.connect(gainNodeRef.current!);
-      source.start();
-      sourceRef.current = source;
+  const ensureCtx = useCallback(async (): Promise<boolean> => {
+    try {
+      if (!ctxRef.current) {
+        const Ctx = window.AudioContext ?? (window as any).webkitAudioContext;
+        if (!Ctx) return false;
+        ctxRef.current = new Ctx();
+        gainRef.current = ctxRef.current.createGain();
+        gainRef.current.connect(ctxRef.current.destination);
+        gainRef.current.gain.value = volume;
+      }
+      if (ctxRef.current.state === 'suspended') {
+        await ctxRef.current.resume();
+      }
+      return ctxRef.current.state === 'running';
+    } catch {
+      return false;
     }
   }, [volume]);
 
-  // Autoplay on mount — try immediately, fallback to first user interaction
-  useEffect(() => {
-    const tryAutoplay = async () => {
-      try {
-        await startAudio();
-        setIsPlaying(true);
-        hasStartedRef.current = true;
-      } catch {
-        // Autoplay blocked by browser policy
-        setAutoplayBlocked(true);
+  const play = useCallback(async (): Promise<boolean> => {
+    const ok = await ensureCtx();
+    if (!ok || !ctxRef.current) return false;
+    try {
+      if (!srcRef.current) {
+        const src = buildMelody(ctxRef.current);
+        src.connect(gainRef.current!);
+        src.start();
+        srcRef.current = src;
       }
-    };
+      return true;
+    } catch {
+      return false;
+    }
+  }, [ensureCtx]);
 
-    // Small delay to let the page settle
-    const timer = setTimeout(() => {
-      tryAutoplay();
-    }, 800);
-
-    return () => clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // ── Autoplay — try silently, fallback to click ────────────────────────────
+  useEffect(() => {
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      if (cancelled || startedRef.current) return;
+      const ok = await play();
+      if (cancelled) return;
+      if (ok) {
+        setIsPlaying(true);
+        startedRef.current = true;
+      } else {
+        setNeedsClick(true); // show "click anywhere" hint
+      }
+    }, 1000);
+    return () => { cancelled = true; clearTimeout(timer); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Fallback: start on first user click anywhere on the page
+  // ── First-interaction fallback ────────────────────────────────────────────
   useEffect(() => {
-    if (!autoplayBlocked) return;
-
-    const handleFirstInteraction = async () => {
-      if (hasStartedRef.current) return;
-      try {
-        await startAudio();
+    if (!needsClick) return;
+    const handler = async () => {
+      if (startedRef.current) return;
+      const ok = await play();
+      if (ok) {
         setIsPlaying(true);
-        hasStartedRef.current = true;
-        setAutoplayBlocked(false);
-      } catch {}
-      document.removeEventListener('click', handleFirstInteraction);
-      document.removeEventListener('keydown', handleFirstInteraction);
+        startedRef.current = true;
+        setNeedsClick(false);
+      }
     };
-
-    document.addEventListener('click', handleFirstInteraction);
-    document.addEventListener('keydown', handleFirstInteraction);
+    window.addEventListener('click',      handler, { once: true });
+    window.addEventListener('touchstart', handler, { once: true });
     return () => {
-      document.removeEventListener('click', handleFirstInteraction);
-      document.removeEventListener('keydown', handleFirstInteraction);
+      window.removeEventListener('click',      handler);
+      window.removeEventListener('touchstart', handler);
     };
-  }, [autoplayBlocked, startAudio]);
+  }, [needsClick, play]);
 
-  const togglePlay = useCallback(async () => {
+  // ── Toggle ────────────────────────────────────────────────────────────────
+  const toggle = useCallback(async () => {
     if (isPlaying) {
-      stopAudio();
-      if (audioCtxRef.current) await audioCtxRef.current.suspend();
+      stopSrc();
+      try { await ctxRef.current?.suspend(); } catch { /* ok */ }
       setIsPlaying(false);
     } else {
-      if (audioCtxRef.current?.state === 'suspended') {
-        await audioCtxRef.current.resume();
+      if (ctxRef.current?.state === 'suspended') {
+        try { await ctxRef.current.resume(); setIsPlaying(true); } catch { /* ok */ }
       } else {
-        await startAudio();
+        const ok = await play();
+        if (ok) setIsPlaying(true);
       }
-      setIsPlaying(true);
     }
-  }, [isPlaying, startAudio, stopAudio]);
+  }, [isPlaying, play, stopSrc]);
 
-  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
-    if (gainNodeRef.current && audioCtxRef.current) {
-      gainNodeRef.current.gain.setTargetAtTime(newVolume, audioCtxRef.current.currentTime, 0.01);
+  // ── Volume ────────────────────────────────────────────────────────────────
+  const handleVolume = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = parseFloat(e.target.value);
+    setVolume(v);
+    if (gainRef.current && ctxRef.current) {
+      gainRef.current.gain.setTargetAtTime(v, ctxRef.current.currentTime, 0.02);
     }
   }, []);
 
+  // ── Cleanup ───────────────────────────────────────────────────────────────
   useEffect(() => {
     return () => {
-      stopAudio();
+      stopSrc();
       try {
-        if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
-          audioCtxRef.current.close();
+        if (ctxRef.current && ctxRef.current.state !== 'closed') {
+          ctxRef.current.close();
         }
-      } catch {
-        // Already closed — safe to ignore
-      }
+      } catch { /* ok */ }
     };
-  }, [stopAudio]);
+  }, [stopSrc]);
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="fixed bottom-6 right-4 sm:right-6 z-50 flex flex-col items-end gap-3">
-      {/* Autoplay blocked notice */}
-      {autoplayBlocked && (
+      {/* Click-to-play hint for mobile */}
+      {needsClick && (
         <div
-          className="glass-card-dark px-4 py-2 text-xs text-yellow-300 flex items-center gap-2"
-          style={{ border: '1px solid rgba(255, 215, 0, 0.3)', maxWidth: '200px' }}
+          className="glass-card-dark px-4 py-2 text-xs text-yellow-300 flex items-center gap-2 max-w-[200px]"
+          style={{ border: '1px solid rgba(255,215,0,0.35)' }}
         >
           <span>🔔</span>
-          <span>Klik di mana saja untuk mulai musik</span>
+          <span>Tap di mana saja untuk mulai musik</span>
         </div>
       )}
 
-      {/* Expanded panel */}
+      {/* Expanded settings */}
       {isExpanded && (
         <div
-          className="glass-card-dark p-4 w-64 sm:w-72"
-          style={{ border: '1px solid rgba(255, 215, 0, 0.3)' }}
+          className="glass-card-dark p-4 w-60 sm:w-72"
+          style={{ border: '1px solid rgba(255,215,0,0.3)' }}
         >
           <div className="flex items-center gap-2 mb-3">
             <span className="text-xl">🎵</span>
@@ -207,11 +206,9 @@ const MusicPlayer = () => {
             </div>
             {isPlaying && (
               <div className="music-wave flex-shrink-0">
-                <span style={{ height: '4px' }} />
-                <span style={{ height: '8px' }} />
-                <span style={{ height: '12px' }} />
-                <span style={{ height: '8px' }} />
-                <span style={{ height: '4px' }} />
+                {[4, 8, 12, 8, 4].map((h, i) => (
+                  <span key={i} style={{ height: `${h}px` }} />
+                ))}
               </div>
             )}
           </div>
@@ -219,36 +216,35 @@ const MusicPlayer = () => {
             <span className="text-sm">🔉</span>
             <input
               type="range" min="0" max="1" step="0.05" value={volume}
-              onChange={handleVolumeChange}
+              onChange={handleVolume}
               className="flex-1 h-1 rounded-full appearance-none cursor-pointer"
-              style={{ background: `linear-gradient(to right, #FFD700 ${volume * 100}%, rgba(255,255,255,0.2) ${volume * 100}%)` }}
-              aria-label="Volume control"
+              style={{ background: `linear-gradient(to right,#FFD700 ${volume*100}%,rgba(255,255,255,0.2) ${volume*100}%)` }}
+              aria-label="Volume"
             />
             <span className="text-xs text-gray-400 w-8 text-right">{Math.round(volume * 100)}%</span>
           </div>
-          <p className="text-gray-500 text-xs mt-3 text-center">🎄 Autoplay Aktif</p>
         </div>
       )}
 
-      {/* Controls */}
+      {/* Controls row */}
       <div className="flex items-center gap-2">
         <button
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={() => setIsExpanded(v => !v)}
           className="glass-card-dark px-3 py-2 text-xs text-gray-300 hover:text-white transition-colors rounded-full"
-          style={{ border: '1px solid rgba(255, 215, 0, 0.2)' }}
-          aria-label="Toggle music settings"
+          style={{ border: '1px solid rgba(255,215,0,0.2)' }}
+          aria-label="Musik settings"
         >
           {isExpanded ? '✕' : '🎶 Musik'}
         </button>
         <button
-          onClick={togglePlay}
+          onClick={toggle}
           className="music-player w-14 h-14 flex items-center justify-center rounded-full text-2xl transition-all duration-300 hover:scale-110 active:scale-95"
           style={{
             boxShadow: isPlaying
-              ? '0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(196, 30, 58, 0.3)'
-              : '0 4px 20px rgba(196, 30, 58, 0.3)',
+              ? '0 0 20px rgba(255,215,0,0.5),0 0 40px rgba(196,30,58,0.3)'
+              : '0 4px 20px rgba(196,30,58,0.3)',
           }}
-          aria-label={isPlaying ? 'Pause music' : 'Play Christmas music'}
+          aria-label={isPlaying ? 'Pause' : 'Play musik natal'}
         >
           {isPlaying ? '⏸️' : '▶️'}
         </button>

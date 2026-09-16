@@ -1,10 +1,12 @@
 'use client';
 
-import Image from 'next/image';
+import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import ChristmasTree from '@/components/ChristmasTree';
 import ChristmasLights from '@/components/ChristmasLights';
 import Countdown from '@/components/Countdown';
+
+const SplashScreen = dynamic(() => import('@/components/SplashScreen'), { ssr: false });
 
 const SnowEffect = dynamic(() => import('@/components/SnowEffect'), { ssr: false });
 const StarBackground = dynamic(() => import('@/components/StarBackground'), { ssr: false });
@@ -21,6 +23,7 @@ const VERSE_REFERENCE  = "";
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function Home() {
+  const [showSplash, setShowSplash] = useState(true);
   const wishes = [
     { emoji: '🎁', text: 'Semoga Natal membawa kebahagiaan dan kedamaian' },
     { emoji: '❤️', text: 'Cinta dan kehangatan untuk orang-orang terkasih' },
@@ -35,10 +38,17 @@ export default function Home() {
   ];
 
   return (
-    <main
-      className="relative min-h-screen bg-christmas-gradient overflow-hidden"
-      style={{ fontFamily: 'var(--font-inter)' }}
-    >
+    <>
+      {showSplash && <SplashScreen onEnter={() => setShowSplash(false)} />}
+
+      <main
+        className="relative min-h-screen bg-christmas-gradient overflow-hidden"
+        style={{
+          fontFamily: 'var(--font-inter)',
+          opacity: showSplash ? 0 : 1,
+          transition: 'opacity 0.6s ease',
+        }}
+      >
       {/* Gradient overlays */}
       <div
         className="fixed inset-0 pointer-events-none z-0"
@@ -196,12 +206,11 @@ export default function Home() {
                   aspectRatio: '4/3',
                 }}
               >
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={img.src}
                   alt={img.caption}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  sizes="(max-width: 640px) 100vw, 33vw"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
                 {/* Overlay */}
                 <div
@@ -223,11 +232,6 @@ export default function Home() {
               </div>
             ))}
           </div>
-
-          {/* Upload hint */}
-          <p className="text-center text-gray-500 text-xs mt-3">
-            💡 Ganti file <code className="text-gray-400 bg-white/5 px-1 rounded">public/namaposo-photo.png</code> dengan foto asli, atau tambah lebih banyak foto di array <code className="text-gray-400 bg-white/5 px-1 rounded">galleryImages</code>
-          </p>
         </section>
 
         {/* ── Tree + Scene ───────────────────────────────────────── */}
@@ -289,7 +293,7 @@ export default function Home() {
           <div className="flex items-center justify-center gap-2 text-gray-500 text-xs">
             <span>Made with</span>
             <span className="text-red-400">❤️</span>
-            <span>by Namaposo GKPS KP. Durian · Christmas 2026</span>
+            <span>by SiBolislavia · Christmas 2026</span>
           </div>
           <p className="text-gray-600 text-xs mt-1">🎄 Selamat Merayakan Natal bersama keluarga tercinta 🎄</p>
         </footer>
@@ -317,5 +321,6 @@ export default function Home() {
       {/* Music Player */}
       <MusicPlayer />
     </main>
+    </>
   );
 }

@@ -194,7 +194,8 @@ body {
 
 /* Progress bar */
 .progress-bar {
-  background: linear-gradient(90deg, #C41E3A, #FFD700, #165B33);
+  background: #3DFFEC;
+  box-shadow: 0 0 12px rgba(61, 255, 236, 0.6);
   border-radius: 50px;
   height: 6px;
   position: relative;
