@@ -105,9 +105,74 @@ const DriftWall: React.FC<DriftWallProps> = ({
   }, []);
 
   const columnItems = useMemo(() => {
-    const cols: DriftWallItem[][] = Array.from({ length: columns }, () => []);
-    items.forEach((item, i) => cols[i % columns].push(item));
-    return cols.map(col => (col.length ? col : items.slice(0, 1)));
+    if (!items.length) return Array.from({ length: columns }, () => []);
+    if (items.length === 1) return Array.from({ length: columns }, () => [items[0]]);
+
+    let seed = 1337;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+
+    const passesPerColumn = 3;
+    const cols: DriftWallItem[][] = [];
+
+    for (let c = 0; c < columns; c++) {
+      const col: DriftWallItem[] = [];
+      for (let p = 0; p < passesPerColumn; p++) {
+        const pool = [...items];
+        for (let i = pool.length - 1; i > 0; i--) {
+          const j = Math.floor(rand() * (i + 1));
+          [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+
+        for (let i = 0; i < pool.length; i++) {
+          const rowIdx = col.length;
+          const prevVertical = rowIdx > 0 ? col[rowIdx - 1] : null;
+          const prevHorizontal = c > 0 ? cols[c - 1][rowIdx] : null;
+
+          if (
+            (prevVertical && pool[i].image === prevVertical.image) ||
+            (prevHorizontal && pool[i].image === prevHorizontal.image)
+          ) {
+            const swapIdx = pool.findIndex(
+              (cand, idx) =>
+                idx > i &&
+                (!prevVertical || cand.image !== prevVertical.image) &&
+                (!prevHorizontal || cand.image !== prevHorizontal.image)
+            );
+            if (swapIdx !== -1) {
+              [pool[i], pool[swapIdx]] = [pool[swapIdx], pool[i]];
+            } else if (prevVertical && pool[i].image === prevVertical.image) {
+              const vSwapIdx = pool.findIndex((cand, idx) => idx > i && cand.image !== prevVertical.image);
+              if (vSwapIdx !== -1) {
+                [pool[i], pool[vSwapIdx]] = [pool[vSwapIdx], pool[i]];
+              }
+            }
+          }
+          col.push(pool[i]);
+        }
+      }
+
+      if (col.length > 2 && col[col.length - 1].image === col[0].image) {
+        const lastIdx = col.length - 1;
+        for (let k = lastIdx - 1; k > 1; k--) {
+          if (
+            col[k].image !== col[0].image &&
+            col[k].image !== col[lastIdx - 1].image &&
+            col[lastIdx].image !== col[k - 1].image &&
+            col[lastIdx].image !== col[k + 1].image
+          ) {
+            [col[lastIdx], col[k]] = [col[k], col[lastIdx]];
+            break;
+          }
+        }
+      }
+
+      cols.push(col);
+    }
+
+    return cols;
   }, [items, columns]);
 
   const columnMeta = useMemo(() => {

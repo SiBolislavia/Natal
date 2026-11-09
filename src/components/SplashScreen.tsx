@@ -35,8 +35,11 @@ export default function SplashScreen({ onEnter }: SplashScreenProps) {
   }, []);
 
   const handleEnter = useCallback(() => {
-    setExiting(true);
-    setTimeout(onEnter, 700);
+    setExiting(prev => {
+      if (prev) return prev;
+      setTimeout(onEnter, 700);
+      return true;
+    });
   }, [onEnter]);
 
   return (
@@ -166,8 +169,8 @@ export default function SplashScreen({ onEnter }: SplashScreenProps) {
         </p>
 
         {/* Countdown */}
-        <div style={{ marginBottom: '2.8rem' }}>
-          <Countdown />
+        <div style={{ marginBottom: '2rem' }}>
+          <Countdown onComplete={handleEnter} />
         </div>
 
         {/* Enter button */}
@@ -175,31 +178,30 @@ export default function SplashScreen({ onEnter }: SplashScreenProps) {
           id="enter-site-btn"
           onClick={handleEnter}
           style={{
-            background: 'linear-gradient(135deg, rgba(196,30,58,0.85), rgba(22,91,51,0.85))',
-            border: '1px solid rgba(255,215,0,0.45)',
-            borderRadius: 50,
+            background: 'rgba(255, 255, 255, 0.08)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: 9999,
             color: '#fff',
-            padding: '0.75rem 2.5rem',
-            fontSize: 'clamp(0.85rem, 2vw, 1rem)',
-            fontWeight: 600,
-            letterSpacing: '0.08em',
+            padding: '0.65rem 2rem',
+            fontSize: 'clamp(0.85rem, 2vw, 0.95rem)',
+            fontWeight: 500,
+            letterSpacing: '0.05em',
             cursor: 'pointer',
-            backdropFilter: 'blur(12px)',
-            boxShadow: '0 4px 24px rgba(196,30,58,0.35), 0 0 40px rgba(255,215,0,0.1)',
-            transition: 'transform 0.2s, box-shadow 0.2s, border-color 0.2s',
+            backdropFilter: 'blur(10px)',
+            transition: 'background 0.2s, border-color 0.2s, transform 0.2s',
           }}
           onMouseEnter={e => {
-            (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-3px) scale(1.04)';
-            (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 8px 36px rgba(196,30,58,0.5), 0 0 60px rgba(255,215,0,0.2)';
-            (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,215,0,0.8)';
+            (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.15)';
+            (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.35)';
+            (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)';
           }}
           onMouseLeave={e => {
+            (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.08)';
+            (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.2)';
             (e.currentTarget as HTMLButtonElement).style.transform = '';
-            (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 24px rgba(196,30,58,0.35), 0 0 40px rgba(255,215,0,0.1)';
-            (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,215,0,0.45)';
           }}
         >
-          Masuk ke Website
+          Lihat Tampilan Awal
         </button> */}
       </div>
     </div>

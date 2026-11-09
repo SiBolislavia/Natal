@@ -4,7 +4,6 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import ChristmasTree from '@/components/ChristmasTree';
 import ChristmasLights from '@/components/ChristmasLights';
-import Countdown from '@/components/Countdown';
 
 const SplashScreen = dynamic(() => import('@/components/SplashScreen'), { ssr: false });
 
@@ -95,17 +94,8 @@ export default function Home() {
           </h1>
 
           <p className="text-gray-300 text-sm sm:text-base md:text-lg max-w-md mx-auto" style={{ lineHeight: 1.6 }}>
-            Menghitung waktu menuju momen paling magis di tahun ini
+            Merayakan sukacita dan kehangatan momen paling magis di tahun ini
           </p>
-
-          {/* Live indicator */}
-          <div className="flex items-center justify-center gap-2 mt-3">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
-            </span>
-            <span className="text-xs text-gray-400 tracking-wide">Live Countdown</span>
-          </div>
         </header>
 
         {/* ── Target Date Banner ────────────────────────────────── */}
@@ -118,11 +108,6 @@ export default function Home() {
             <p className="text-white font-semibold text-sm sm:text-base">Sabtu, 12 Desember 2026</p>
           </div>
         </div>
-
-        {/* ── Countdown ─────────────────────────────────────────── */}
-        <section aria-label="Christmas countdown" className="w-full max-w-2xl mb-12 sm:mb-16 px-2">
-          <Countdown />
-        </section>
 
         {/* ── Tema Natal ────────────────────────────────────────── */}
         <section

@@ -147,19 +147,17 @@ body {
 
 /* Countdown number card */
 .countdown-card {
-  background: linear-gradient(145deg, rgba(196, 30, 58, 0.3), rgba(22, 91, 51, 0.2));
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 215, 0, 0.3);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(196, 30, 58, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 .countdown-card:hover {
-  border-color: rgba(255, 215, 0, 0.6);
-  box-shadow: 0 12px 40px rgba(196, 30, 58, 0.4), 0 0 20px rgba(255, 215, 0, 0.2);
-  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
 /* Music player */
